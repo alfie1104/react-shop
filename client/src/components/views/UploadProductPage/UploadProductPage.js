@@ -20,7 +20,7 @@ const UploadProductPage = () => {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState(0);
   const [continent, setContinent] = useState(1);
-  const [image, setImage] = useState([]);
+  const [images, setImages] = useState([]);
 
   const titleChangeHandler = (e) => {
     setTitle(e.currentTarget.value);
@@ -38,6 +38,11 @@ const UploadProductPage = () => {
     setContinent(e.currentTarget.value);
   };
 
+  const updateImages = (newImages) => {
+    setImages(newImages);
+    console.log(newImages);
+  };
+
   return (
     <div style={{ maxWidth: "700px", margin: "2rem auto" }}>
       <div style={{ textAlign: "center", marginBottom: "2rem" }}>
@@ -45,7 +50,7 @@ const UploadProductPage = () => {
       </div>
 
       <Form>
-        <FileUpload />
+        <FileUpload refreshFunction={updateImages} />
         <br />
         <br />
         <label>이름</label>
