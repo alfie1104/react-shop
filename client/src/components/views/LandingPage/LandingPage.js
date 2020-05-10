@@ -2,21 +2,52 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Icon, Col, Card, Row } from "antd";
 import ImageSlider from "../../utils/ImageSlider";
+import CheckBox from "./Sections/CheckBox";
+import { continents } from "./Sections/Datas";
 
 function LandingPage() {
   const [products, setProducts] = useState([]);
+  const [skip, setSkip] = useState(0);
+  const [limit, setLimit] = useState(1);
+  const [postSize, setPostSize] = useState(0);
 
   useEffect(() => {
-    const body = {};
+    const body = {
+      skip,
+      limit,
+    };
+
+    getProducts(body);
+  }, []);
+
+  const getProducts = (body) => {
     // 몽고DB에 있는 상품데이터 가져오기
-    axios.post("/api/product/products").then((response) => {
+    axios.post("/api/product/products", body).then((response) => {
       if (response.data.success) {
-        setProducts(response.data.productsInfo);
+        if (body.loadMore) {
+          setProducts([...products, ...response.data.productsInfo]);
+        } else {
+          setProducts(response.data.productsInfo);
+        }
+        setPostSize(response.data.postSize);
       } else {
         alert("상품들을 가져오는데 실패 했습니다.");
       }
     });
-  }, []);
+  };
+
+  const loadMoreHandler = () => {
+    let newSkip = skip + limit;
+
+    const body = {
+      skip: newSkip,
+      limit,
+      loadMore: true,
+    };
+
+    getProducts(body);
+    setSkip(newSkip);
+  };
 
   const renderCards = products.map((product, index) => (
     <Col lg={6} md={8} xs={24} key={product._id}>
@@ -37,14 +68,21 @@ function LandingPage() {
 
       {/* Filter */}
 
+      {/* CheckBox */}
+      <CheckBox list={continents} />
+
+      {/* RadioBox */}
+
       {/* Search */}
 
       {/* Cards */}
       <Row gutter={[16, 16]}>{renderCards}</Row>
 
-      <div stype={{ display: "flex", justifyContent: "center" }}>
-        <button>더보기</button>
-      </div>
+      {postSize >= limit && (
+        <div stype={{ display: "flex", justifyContent: "center" }}>
+          <button onClick={loadMoreHandler}>더보기</button>
+        </div>
+      )}
     </div>
   );
 }
