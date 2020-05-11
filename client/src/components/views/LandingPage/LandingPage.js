@@ -3,13 +3,18 @@ import axios from "axios";
 import { Icon, Col, Card, Row } from "antd";
 import ImageSlider from "../../utils/ImageSlider";
 import CheckBox from "./Sections/CheckBox";
-import { continents } from "./Sections/Datas";
+import { continents, price } from "./Sections/Datas";
+import RadioBox from "./Sections/RadioBox";
 
 function LandingPage() {
   const [products, setProducts] = useState([]);
   const [skip, setSkip] = useState(0);
   const [limit, setLimit] = useState(1);
   const [postSize, setPostSize] = useState(0);
+  const [filters, setFilters] = useState({
+    continents: [],
+    price: [],
+  });
 
   useEffect(() => {
     const body = {
@@ -57,6 +62,24 @@ function LandingPage() {
     </Col>
   ));
 
+  const showFilterResults = (filters) => {
+    const body = {
+      skip: 0,
+      limit,
+      filters,
+    };
+    console.log(body);
+    getProducts(body);
+    setSkip(0);
+  };
+
+  const handleFilters = (filterContent, category) => {
+    const newFilters = { ...filters };
+    newFilters[category] = filterContent;
+
+    showFilterResults(newFilters);
+  };
+
   return (
     <div style={{ width: "75%", margin: "3rem auto" }}>
       <div style={{ textAlign: "center" }}>
@@ -68,10 +91,22 @@ function LandingPage() {
 
       {/* Filter */}
 
-      {/* CheckBox */}
-      <CheckBox list={continents} />
-
-      {/* RadioBox */}
+      <Row gutter={[16, 16]}>
+        <Col lg={12} xs={24}>
+          {/* CheckBox */}
+          <CheckBox
+            list={continents}
+            handleFilters={(filters) => handleFilters(filters, "continents")}
+          />
+        </Col>
+        <Col lg={12} xs={24}>
+          {/* RadioBox */}
+          <RadioBox
+            list={price}
+            handleFilters={(filters) => handleFilters(filters, "price")}
+          />
+        </Col>
+      </Row>
 
       {/* Search */}
 
