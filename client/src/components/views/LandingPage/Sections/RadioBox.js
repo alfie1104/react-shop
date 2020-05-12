@@ -1,27 +1,29 @@
-import React from "react";
+import React, { useState } from "react";
 import { Collapse, Radio } from "antd";
 
 const RadioBox = (props) => {
+  const [radioValue, setRadioValue] = useState(0);
   const renderRadioBox = () =>
     props.list &&
-    props.list.map((value, index) => (
-      <React.Fragment key={index}>
-        <Radio
-          onChange={() => handleToggle(value._id)}
-          checked={checked.indexOf(value._id) === -1 ? false : true}
-        >
-          <span>{value.name}</span>
-        </Radio>
-      </React.Fragment>
+    props.list.map((value) => (
+      <Radio key={value._id} value={value._id}>
+        {value.name}
+      </Radio>
     ));
+
+  const handleChange = (event) => {
+    setRadioValue(event.target.value);
+    props.handleFilters(event.target.value);
+  };
 
   return (
     <div>
       <Collapse defaultActiveKey={["1"]}>
-        <Collapse.Panel
-          header="This is panel header 1"
-          key="1"
-        ></Collapse.Panel>
+        <Collapse.Panel header="This is panel header 1" key="1">
+          <Radio.Group onChange={handleChange} value={radioValue}>
+            {renderRadioBox()}
+          </Radio.Group>
+        </Collapse.Panel>
       </Collapse>
     </div>
   );
