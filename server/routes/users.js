@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { User } = require("../models/User");
+const { Product } = require("../models/Product");
 
 const { auth } = require("../middleware/auth");
 
@@ -129,4 +130,36 @@ router.post("/addToCart", auth, (req, res) => {
   });
 });
 
+router.get("/removeFromCart", auth, (req, res) => {
+  //먼저 Cart안에 내가 지우려고 한 상품을 지워주기
+  //pull을 이용하여 데이터 삭제가능
+  //auth 모듈을 이용해서 req.user 정보 획득가능
+  //new : true를 해야지 업데이트 된 새로운 데이터를 가져올 수 있음
+  User.findOneAndUpdate(
+    { _id: req.user._id },
+    {
+      $pull: {
+        cart: {
+          id: req.query.id,
+        },
+      },
+    },
+    { new: true },
+    (err, userInfo) => {
+      //product collection에서 현재 남아있는 상품들의 정보를 가져오기
+      if (err) return res.status(400).send(err);
+
+      let cart = userInfo.cart;
+      let array = cart.map((item) => item.id);
+
+      Product.find({ _id: { $in: array } })
+        .populate("writer")
+        .exec((err, productInfo) => {
+          if (err) return res.status(400).send(err);
+
+          return res.status(200).send(productInfo, cart);
+        });
+    }
+  );
+});
 module.exports = router;
