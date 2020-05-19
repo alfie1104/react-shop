@@ -95,7 +95,7 @@ export function getCartItems(cartItems, userCart) {
 
 export function removeCartItem(productId) {
   const request = axios
-    .get(`/api/users/removeFromCart?id=${productId}`)
+    .get(`${USER_SERVER}/removeFromCart?id=${productId}`)
     .then((response) => {
       //productInfo와 cart정보를 조합해서 CartDetail을 만든다.
       response.data.cart.forEach((item) => {
@@ -107,6 +107,10 @@ export function removeCartItem(productId) {
       });
 
       return response.data;
+    })
+    .catch((err) => {
+      console.log("Error 발생");
+      console.log(err);
     });
 
   return {
