@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { User } = require("../models/User");
 const { Product } = require("../models/Product");
+const { Payment } = require("../models/Payment");
 
 const { auth } = require("../middleware/auth");
 
@@ -147,19 +148,36 @@ router.get("/removeFromCart", auth, (req, res) => {
     { new: true },
     (err, userInfo) => {
       //product collection에서 현재 남아있는 상품들의 정보를 가져오기
-      if (err) return res.status(400).send(err);
-
       let cart = userInfo.cart;
       let array = cart.map((item) => item.id);
 
       Product.find({ _id: { $in: array } })
         .populate("writer")
         .exec((err, productInfo) => {
-          if (err) return res.status(400).send(err);
-
           return res.status(200).send(productInfo, cart);
         });
     }
   );
+});
+
+router.post("/successBuy", auth, (req, res) => {
+  //1. User collection안의 History 필드안에 간단한 결제 정보 넣어주기
+  let history = [];
+  let transactionData = {};
+
+  req.body.cartDetail.forEach((item) => {
+    history.push({
+      dateOfPurchase: Date.now(),
+      name: item.title,
+      id: item._id,
+      price: item.price,
+      quantity: item.quantity,
+      paymentId: req.body.paymentData.paymentId,
+    });
+  });
+
+  //2. Payment collection안에 자세한 결제정보 넣어주기
+
+  //3. Product collection의 sold 필드값을 팔린 갯수만큼 증가시키기
 });
 module.exports = router;
