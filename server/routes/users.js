@@ -5,6 +5,7 @@ const { Product } = require("../models/Product");
 const { Payment } = require("../models/Payment");
 
 const { auth } = require("../middleware/auth");
+const async = require("async");
 
 //=================================
 //             User
@@ -154,7 +155,7 @@ router.get("/removeFromCart", auth, (req, res) => {
       Product.find({ _id: { $in: array } })
         .populate("writer")
         .exec((err, productInfo) => {
-          return res.status(200).send(productInfo, cart);
+          return res.status(200).json(productInfo, cart);
         });
     }
   );
@@ -177,7 +178,71 @@ router.post("/successBuy", auth, (req, res) => {
   });
 
   //2. Payment collection안에 자세한 결제정보 넣어주기
+  transactionData.user = {
+    id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+  };
 
-  //3. Product collection의 sold 필드값을 팔린 갯수만큼 증가시키기
+  transactionData.data = req.body.paymentData;
+  transactionData.product = history;
+
+  //history 정보 저장
+  User.findOneAndUpdate(
+    {
+      id: req.user._id,
+    },
+    {
+      $push: {
+        history: history,
+      },
+      $set: {
+        cart: [],
+      },
+    },
+    { new: true },
+    (err, user) => {
+      if (err) return res.json({ success: false, err });
+
+      //payment에 transaction 정보 저장
+      const payment = new Payment(transactionData);
+      payment.save((err, doc) => {
+        if (err) return res.json({ success: false, err });
+        //3. Product collection의 sold 필드값을 팔린 갯수만큼 증가시키기
+
+        //상품 당 몇 개의 quantity를 샀는지 확인
+        let products = [];
+        doc.product.forEach((item) => {
+          products.push({ id: item.id, quantity: item.quantity });
+        });
+
+        async.eachSeries(
+          products,
+          (item, callback) => {
+            Product.update(
+              {
+                _id: item.id,
+              },
+              {
+                $inc: {
+                  sold: item.quantity,
+                },
+              },
+              {
+                new: false,
+              },
+              callback
+            );
+          },
+          (err, _) => {
+            if (err) return res.status(400).json({ success: false, err });
+            res
+              .status(200)
+              .json({ success: true, cart: user.cart, cartDetail: [] });
+          }
+        );
+      });
+    }
+  );
 });
 module.exports = router;
